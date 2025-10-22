@@ -1,1 +1,6 @@
-
+1. [Диаграмма случаев использования](./use_case.drawio.png)
+![Диаграмма случаев использования](./use_case.drawio.png)
+2. [Диаграмма активностей](./Action_diagram.drawio.png)
+![Диаграмма активностей](./Action_diagram.drawio.png)
+3. [BPMN-диаграмма](./defects_BPMN_diagram.jpg)
+![BPMN-диаграмма](./defects_BPMN_diagram.jpg)
