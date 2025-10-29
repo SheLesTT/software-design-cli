@@ -1,0 +1,6 @@
+1. [Диаграмма классов](./ClassesDiagram.png)
+![Диаграмма классов](./ClassesDiagram.png)
+2. [Диаграмма компонентов](./ComponentDiagram.png)
+![Диаграмма компонентов](./ComponentDiagram.png)
+3. [Диаграмма развёртки](./DeploymentDiagram.png)
+![Диаграмма развёртки](./DeploymentDiagram.png)
