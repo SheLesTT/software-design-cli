@@ -1,9 +1,9 @@
 #pragma once
 
-namespace coreutils {
+#include <input.hpp>
+#include <output.hpp>
 
-class Input;
-class Output;
+namespace coreutils {
 
 class Command {
  public:
