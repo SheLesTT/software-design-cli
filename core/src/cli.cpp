@@ -1,5 +1,6 @@
 #include <cli.hpp>
 
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
@@ -16,6 +17,8 @@ void CLI::runCli(Input& in, Output& out) {
   constexpr size_t kBatchSize = 1024;
 
   while (!IsExit) {
+    std::cout << "-> ";
+
     auto data = in.read(kBatchSize);
     std::string str_data{data.begin(), data.end()};
     std::istringstream input_steam{std::move(str_data)};
@@ -34,6 +37,9 @@ void CLI::runCli(Input& in, Output& out) {
 
 int CLI::process(std::string&& line, Output& out) {
   auto tokens = parser_.parseToTokens(std::move(line));
+
+  if (tokens.empty()) return 0;
+
   auto commands = splitIntoCommands(std::move(tokens));
 
   DummyInput dummy_input;

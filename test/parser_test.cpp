@@ -121,9 +121,8 @@ TEST_F(ParserTest, UndefinedVariable) {
   Parser parser;
   auto tokens = parser.parseToTokens("echo $UNDEFINED_VAR_12345");
 
-  ASSERT_EQ(tokens.size(), 2);
+  ASSERT_EQ(tokens.size(), 1);
   EXPECT_EQ(tokens[0], "echo");
-  EXPECT_EQ(tokens[1], "");  // пустая строка для несуществующей переменной
 }
 
 TEST_F(ParserTest, VariableInDoubleQuotes) {
@@ -179,6 +178,33 @@ TEST_F(ParserTest, MixedMultipleVariables) {
   ASSERT_EQ(tokens.size(), 2);
   EXPECT_EQ(tokens[0], "echo");
   EXPECT_EQ(tokens[1], "AAABBB");
+}
+
+TEST_F(ParserTest, JustSetVariable) {
+  Parser parser;
+  auto tokens = parser.parseToTokens("a=erm");
+
+  ASSERT_TRUE(tokens.empty());
+}
+
+TEST_F(ParserTest, ParseVariables) {
+  Parser parser;
+  std::ignore = parser.parseToTokens("ERM_VAR=erm a=123");
+  auto tokens = parser.parseToTokens("echo ${ERM_VAR}${a}");
+
+  ASSERT_EQ(tokens.size(), 2);
+  EXPECT_EQ(tokens[0], "echo");
+  EXPECT_EQ(tokens[1], "erm123");
+}
+
+TEST_F(ParserTest, SetVariablesBeforeCommand) {
+  Parser parser;
+  auto tokens = parser.parseToTokens("a=123 sh -c 'echo ${a}'");
+
+  ASSERT_EQ(tokens.size(), 3);
+  EXPECT_EQ(tokens[0], "sh");
+  EXPECT_EQ(tokens[1], "-c");
+  EXPECT_EQ(tokens[2], "echo 123");
 }
 
 }  // namespace coreutils::test

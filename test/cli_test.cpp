@@ -45,24 +45,24 @@ TEST_F(CLITest, RunCliSingleCommand) {
   EXPECT_EQ(output.read(), "test\n");
 }
 
-// TEST_F(CLITest, RunCliEnvVariables) {
-//   TextOutput output;
+TEST_F(CLITest, RunCliEnvVariables) {
+  TextOutput output;
 
-//   auto run_cli_thread = std::thread{[this, &output]() {
-//     TextInput input("VAR=erm sh -c 'echo ${VAR}'");
+  auto run_cli_thread = std::thread{[this, &output]() {
+    TextInput input("a=123 sh -c 'echo ${a}'");
 
-//     EXPECT_NO_THROW(cli->runCli(input, output));
-//   }};
+    EXPECT_NO_THROW(cli->runCli(input, output));
+  }};
 
-//   while (output.read().empty()) {
-//     // waiting for command execution
-//   }
+  while (output.read().empty()) {
+    // waiting for command execution
+  }
 
-//   IsExit = true;
+  IsExit = true;
 
-//   run_cli_thread.join();
+  run_cli_thread.join();
 
-//   EXPECT_EQ(output.read(), "VAR=erm\n");
-// }
+  EXPECT_EQ(output.read(), "123\n");
+}
 
 }  // namespace coreutils::test

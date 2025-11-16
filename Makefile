@@ -49,3 +49,8 @@ format:
 .PHONY: tests
 tests: build-debug
 	@cd build_debug && ctest -V
+
+# Run tests in debug
+.PHONY: tests-failed
+tests-failed: build-debug
+	@cd build_debug && ctest -V --rerun-failed --output-on-failure
