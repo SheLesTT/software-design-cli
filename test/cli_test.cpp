@@ -27,41 +27,15 @@ class CLITest : public ::testing::Test {
 
 TEST_F(CLITest, RunCliSingleCommand) {
   TextOutput output;
-
-  auto run_cli_thread = std::thread{[this, &output]() {
-    TextInput input("echo test");
-
-    EXPECT_NO_THROW(cli->runCli(input, output));
-  }};
-
-  while (output.read().empty()) {
-    // waiting for command execution
-  }
-
-  IsExit = true;
-
-  run_cli_thread.join();
-
+  TextInput input("echo test");
+  EXPECT_NO_THROW(cli->runCli(input, output));
   EXPECT_EQ(output.read(), "test\n");
 }
 
 TEST_F(CLITest, RunCliEnvVariables) {
   TextOutput output;
-
-  auto run_cli_thread = std::thread{[this, &output]() {
-    TextInput input("a=123 sh -c 'echo ${a}'");
-
-    EXPECT_NO_THROW(cli->runCli(input, output));
-  }};
-
-  while (output.read().empty()) {
-    // waiting for command execution
-  }
-
-  IsExit = true;
-
-  run_cli_thread.join();
-
+  TextInput input("a=123 sh -c 'echo ${a}'");
+  EXPECT_NO_THROW(cli->runCli(input, output));
   EXPECT_EQ(output.read(), "123\n");
 }
 

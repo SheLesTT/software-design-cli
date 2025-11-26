@@ -21,7 +21,6 @@ CLI::CLI(Parser& parser) : parser_(parser) {}
 
 void CLI::runCli(Input& in, Output& out) {
   constexpr size_t kBatchSize = 1024;
-  bool is_tty = isatty(STDIN_FILENO) != 0;
 
   while (!IsExit) {
     std::cout << "-> ";
@@ -29,10 +28,7 @@ void CLI::runCli(Input& in, Output& out) {
 
     auto data = in.read(kBatchSize);
     if (data.empty()) {
-      if (std::cin.eof()) {
-        break;
-      }
-      continue;
+      break;
     }
     std::string str_data{data.begin(), data.end()};
     std::istringstream input_steam{std::move(str_data)};
