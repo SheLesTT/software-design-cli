@@ -6,6 +6,7 @@
 #include <exit_command.hpp>
 #include <global_state.hpp>
 #include <pwd_command.hpp>
+#include <text_input.hpp>
 #include <text_output.hpp>
 #include <wc_command.hpp>
 
@@ -49,6 +50,18 @@ TEST(CommandTest, CatPrintsFileContent) {
   EXPECT_EQ(output.read(), ReadFile(file));
 }
 
+TEST(CommandTest, CatReadInput) {
+  CatCommand command({});
+
+  std::string file(ReadFile(std::filesystem::path(TEST_DATA_DIR) / "file.txt"));
+
+  TextInput input(file);
+  TextOutput output;
+
+  ASSERT_EQ(command.run(input, output), 0);
+  EXPECT_EQ(output.read(), file);
+}
+
 TEST(CommandTest, WcReturnsFileStats) {
   const auto file = std::filesystem::path(TEST_DATA_DIR) / "file.txt";
   WcCommand command({file.string()});
@@ -57,6 +70,18 @@ TEST(CommandTest, WcReturnsFileStats) {
 
   ASSERT_EQ(command.run(input, output), 0);
   EXPECT_EQ(output.read(), "15 98 1039 " + file.string() + "\n");
+}
+
+TEST(CommandTest, WcReadInput) {
+  WcCommand command({});
+
+  std::string file(ReadFile(std::filesystem::path(TEST_DATA_DIR) / "file.txt"));
+
+  TextInput input(std::move(file));
+  TextOutput output;
+
+  ASSERT_EQ(command.run(input, output), 0);
+  EXPECT_EQ(output.read(), "15 98 1039\n");
 }
 
 TEST(CommandTest, PwdPrintsCurrentWorkingDirectory) {

@@ -5,7 +5,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <unistd.h>
 
 namespace coreutils {
 
@@ -13,97 +12,20 @@ namespace {
 
 constexpr size_t kBufferSize = 4096;
 
-}  // namespace
+struct FileStats {
+  size_t lines{};
+  size_t words{};
+  size_t bytes{};
+};
 
-int WcCommand::run(Input& in, Output& out) {
-  if (files_.empty()) {
-    FileStats stats{};
-    bool in_word = false;
-    std::string line;
-    bool has_content = false;
-    
-    while (std::getline(std::cin, line)) {
-      has_content = true;
-      ++stats.lines;
-      stats.bytes += line.size() + 1;
-      for (char ch : line) {
-        if (std::isspace(static_cast<unsigned char>(ch)) != 0) {
-          if (in_word) {
-            ++stats.words;
-            in_word = false;
-          }
-        } else {
-          in_word = true;
-        }
-      }
-      if (in_word) {
-        ++stats.words;
-        in_word = false;
-      }
-    }
-    if (std::cin.eof() && isatty(STDIN_FILENO) != 0) {
-      std::cin.clear();
-    }
-    if (!line.empty() && !has_content) {
-      stats.bytes += line.size();
-      for (char ch : line) {
-        if (std::isspace(static_cast<unsigned char>(ch)) != 0) {
-          if (in_word) {
-            ++stats.words;
-            in_word = false;
-          }
-        } else {
-          in_word = true;
-        }
-      }
-      if (in_word) {
-        ++stats.words;
-      }
-    }
-    
-    auto result = std::to_string(stats.lines) + " " +
-                  std::to_string(stats.words) + " " +
-                  std::to_string(stats.bytes) + "\n";
-    out.write({result.begin(), result.end()});
-    return 0;
-  }
-
-  int exit_code = 0;
-  for (const auto& file : files_) {
-    try {
-      auto stats = collectStats(file);
-      auto line = std::to_string(stats.lines) + " " +
-                  std::to_string(stats.words) + " " +
-                  std::to_string(stats.bytes) + " " + file + "\n";
-      out.write({line.begin(), line.end()});
-    } catch (const std::runtime_error&) {
-      std::cerr << "Unable to open file: " << file << '\n';
-      exit_code = 1;
-    }
-  }
-
-  return exit_code;
-}
-
-WcCommand::FileStats WcCommand::collectStats(const std::string& file) const {
-  std::ifstream stream(file, std::ios::binary);
-  if (!stream.is_open()) {
-    throw std::runtime_error("Unable to open file: " + file);
-  }
-
+[[nodiscard]] FileStats collectStats(auto reader) {
   FileStats stats{};
   bool in_word = false;
-  std::vector<char> buffer(kBufferSize);
-  while (stream) {
-    stream.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-    const auto read_count = stream.gcount();
-    if (read_count <= 0) {
-      break;
-    }
-
-    stats.bytes += static_cast<size_t>(read_count);
-    for (std::streamsize i = 0; i < read_count; ++i) {
-      const unsigned char ch =
+  std::vector<char> buffer = reader(kBufferSize);
+  while (!buffer.empty()) {
+    stats.bytes += static_cast<size_t>(buffer.size());
+    for (std::streamsize i = 0; i < buffer.size(); ++i) {
+      const auto ch =
           static_cast<unsigned char>(buffer[static_cast<size_t>(i)]);
       if (ch == '\n') {
         ++stats.lines;
@@ -118,6 +40,8 @@ WcCommand::FileStats WcCommand::collectStats(const std::string& file) const {
         in_word = true;
       }
     }
+
+    buffer = reader(kBufferSize);
   }
 
   if (in_word) {
@@ -127,5 +51,46 @@ WcCommand::FileStats WcCommand::collectStats(const std::string& file) const {
   return stats;
 }
 
-}  // namespace coreutils
+std::string toString(const FileStats& stats) {
+  return std::to_string(stats.lines) + " " + std::to_string(stats.words) + " " +
+         std::to_string(stats.bytes);
+}
 
+}  // namespace
+
+int WcCommand::run(Input& in, Output& out) {
+  if (files_.empty()) {
+    FileStats stats =
+        collectStats([&in](size_t size) { return in.read(size); });
+
+    auto result = toString(stats) + "\n";
+    out.write({result.begin(), result.end()});
+    return 0;
+  }
+
+  int exit_code = 0;
+  for (const auto& file : files_) {
+    try {
+      std::ifstream stream(file, std::ios::binary);
+      if (!stream.is_open()) {
+        throw std::runtime_error("Unable to open file: " + file);
+      }
+      auto stats =
+          collectStats([stream = std::move(stream)](size_t size) mutable {
+            std::vector<char> buf(size);
+            stream.read(buf.data(), static_cast<std::streamsize>(size));
+            buf.resize(stream.gcount());
+            return buf;
+          });
+      auto line = toString(stats) + " " + file + "\n";
+      out.write({line.begin(), line.end()});
+    } catch (const std::runtime_error&) {
+      std::cerr << "Unable to open file: " << file << '\n';
+      exit_code = 1;
+    }
+  }
+
+  return exit_code;
+}
+
+}  // namespace coreutils

@@ -2,9 +2,7 @@
 
 #include <fstream>
 #include <iostream>
-#include <string>
 #include <vector>
-#include <unistd.h>
 
 namespace coreutils {
 
@@ -16,17 +14,10 @@ constexpr size_t kBufferSize = 4096;
 
 int CatCommand::run(Input& in, Output& out) {
   if (files_.empty()) {
-    std::string line;
-    while (std::getline(std::cin, line)) {
-      line.push_back('\n');
-      out.write({line.begin(), line.end()});
-    }
-    if (std::cin.eof() && isatty(STDIN_FILENO) != 0) {
-      std::cin.clear();
-    }
-    if (!line.empty() && line.back() != '\n') {
-      line.push_back('\n');
-      out.write({line.begin(), line.end()});
+    auto buf = in.read(kBufferSize);
+    while (!buf.empty()) {
+      out.write(std::move(buf));
+      buf = in.read(kBufferSize);
     }
     return 0;
   }
